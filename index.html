@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVE HaulSplitter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <img src="favicon.ico" alt="Logo" style="height: 32px; margin-right: 10px;">
+            <h1>EVE HaulSplitter (DEMO)</h1>
+            <div id="auth-section">
+                <button id="login-btn" class="btn">Login with EVE Online</button>
+                <div id="user-info" class="hidden">
+                    <span id="character-name"></span>
+                    <button id="logout-btn" class="btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content" class="hidden">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="items-input">Items List (Name Amount):</label>
+                    <textarea id="items-input"
+                        placeholder="Enduring Thermal Shield Hardener    26&#10;Regulated Mega Ion Phase Cannon I    26"></textarea>
+                </div>
+
+                <div class="constraints">
+                    <div class="form-group">
+                        <label for="max-value">Max Contract Value (ISK):</label>
+                        <input type="number" id="max-value" min="0" value="3500000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-volume">Max Contract Volume (m³):</label>
+                        <input type="number" id="max-volume" min="0" value="320000">
+                    </div>
+                    <div class="form-group">
+                        <label for="ship-type">Ship Type:</label>
+                        <select id="ship-type">
+                            <option value="20185">Charon</option>
+                            <option value="20187">Obelisk</option>
+                            <option value="20183">Providence</option>
+                            <option value="20189">Fenrir</option>
+                            <option value="28844">Rhea</option>
+                            <option value="28848">Anshar</option>
+                            <option value="28850">Ark</option>
+                            <option value="28846">Nomad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="calculate-btn" class="btn">Calculate</button>
+                <button id="save-fits-btn" class="btn">Save as Ship Fits</button>
+            </div>
+
+
+
+
+
+            <!-- Modal -->
+            <div id="progress-modal" style="display: none;">
+                <div id="progress-modal-content">
+                    <h3>Saving Fits...</h3>
+                    <div id="progress-bar-container" style="width: 100%; background-color: #e7e7e7;">
+                        <div id="progress-bar" style="width: 0%; height: 20px; background-color: rgb(22, 123, 255);">
+                        </div>
+                    </div>
+                    <p id="progress-text">Progress: 0%</p>
+                </div>
+            </div>
+
+
+            <div id="loading" class="hidden">
+                <div class="spinner"></div>
+                <p>Processing items...</p>
+            </div>
+
+            <div id="results" class="hidden">
+                <div class="stats">
+                    <h2>Total Statistics</h2>
+                    <div id="total-stats"></div>
+                </div>
+                <div id="splits-container">
+                    <h2>Splits</h2>
+                    <div id="splits-list"></div>
+                </div>
+
+            </div>
+
+
+
+
+        </main>
+
+    </div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SXLN0JPZBL"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-SXLN0JPZBL');
+    </script>
+
+    <footer
+        style="text-align: center; padding: 10px; background-color: #222121ad; position: fixed; bottom: 0; width: 100%;">
+        <p>Created by Sasha Winston &copy; 2025</p>
+    </footer>
+
+</body>
+
+
+
+</html>
