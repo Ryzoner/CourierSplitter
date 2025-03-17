@@ -3,31 +3,34 @@ class EVEItemSplitter {
         this.itemsCache = new Map();
         this.DELIVERY_COSTS = [150, 300]; // Базовые стоимости для первой и второй фуры
         this.DEFAULT_DELIVERY_COST = 500; // Стоимость для третьей и последующих фур
+        this.availableItems = []; // Для автодополнения
+        this.lastStats = {}; // Сохраняем статистику для повторного использования
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
         this.loadUserPreferences();
-        // Убираем вызов проверки авторизации, так как она больше не требуется для основного функционала
-        // Вместо этого сразу показываем основной контент
+        await this.loadAvailableItems();
         this.updateUIForNoAuth();
     }
 
     setupEventListeners() {
-        // Оставляем обработчики событий, но убираем те, что связаны с авторизацией
         document.getElementById('calculate-btn').addEventListener('click', () => this.calculateSplits());
-        document.getElementById('save-fits-btn').addEventListener('click', () => this.saveFits());
+        document.getElementById('clear-btn').addEventListener('click', () => this.clearInputs());
+        document.getElementById('export-btn').addEventListener('click', () => this.exportResults());
         document.getElementById('max-value').addEventListener('change', () => this.saveUserPreferences());
         document.getElementById('max-volume').addEventListener('change', () => this.saveUserPreferences());
         document.getElementById('ship-type').addEventListener('change', () => this.saveUserPreferences());
+        document.getElementById('strategy-select').addEventListener('change', () => this.calculateSplits());
     }
 
     saveUserPreferences() {
         const preferences = {
             maxValue: document.getElementById('max-value').value,
             maxVolume: document.getElementById('max-volume').value,
-            shipType: document.getElementById('ship-type').value
+            shipType: document.getElementById('ship-type').value,
+            strategy: document.getElementById('strategy-select').value
         };
         localStorage.setItem(config.storageKeys.userPreferences, JSON.stringify(preferences));
     }
@@ -37,6 +40,45 @@ class EVEItemSplitter {
         if (preferences.maxValue) document.getElementById('max-value').value = preferences.maxValue;
         if (preferences.maxVolume) document.getElementById('max-volume').value = preferences.maxVolume;
         if (preferences.shipType) document.getElementById('ship-type').value = preferences.shipType;
+        if (preferences.strategy) document.getElementById('strategy-select').value = preferences.strategy;
+    }
+
+    async loadAvailableItems() {
+        try {
+            const response = await fetch('https://esi.evetech.net/latest/markets/prices/?datasource=tranquility');
+            const data = await response.json();
+            const typeIds = data.map(item => item.type_id).slice(0, 1000);
+            const itemDetails = await Promise.all(
+                typeIds.map(async id => {
+                    try {
+                        const typeResponse = await fetch(`https://esi.evetech.net/latest/universe/types/${id}/?datasource=tranquility`);
+                        const typeData = await typeResponse.json();
+                        return typeData.name || null;
+                    } catch (error) {
+                        return null;
+                    }
+                })
+            );
+            this.availableItems = itemDetails.filter(item => item).slice(0, 500);
+            this.setupAutocomplete();
+        } catch (error) {
+            console.error('Error loading items for autocomplete:', error);
+        }
+    }
+
+    setupAutocomplete() {
+        const input = document.getElementById('items-input');
+        input.addEventListener('input', () => {
+            const value = input.value.split('\n').pop().trim();
+            const suggestions = this.availableItems.filter(item => item.toLowerCase().startsWith(value.toLowerCase())).slice(0, 5);
+            const datalist = document.getElementById('item-suggestions');
+            datalist.innerHTML = suggestions.map(item => `<option value="${item}">${item}</option>`).join('');
+        });
+    }
+
+    clearInputs() {
+        document.getElementById('items-input').value = '';
+        document.getElementById('results').classList.add('hidden');
     }
 
     async calculateSplits() {
@@ -47,6 +89,7 @@ class EVEItemSplitter {
         const input = document.getElementById('items-input').value;
         const maxValue = parseFloat(document.getElementById('max-value').value) || Infinity;
         const maxVolume = parseFloat(document.getElementById('max-volume').value) || Infinity;
+        const strategy = document.getElementById('strategy-select').value;
         const items = this.parseInput(input);
         try {
             const uniqueNames = [...new Set(items.map(item => item.name))];
@@ -61,20 +104,21 @@ class EVEItemSplitter {
             });
             const totalVolume = itemsWithInfo.reduce((sum, item) => sum + (item.volume * item.quantity), 0);
             const totalValue = itemsWithInfo.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const splits = this.createSplits(itemsWithInfo, maxVolume, maxValue);
+            const splits = this.createSplits(itemsWithInfo, maxVolume, maxValue, strategy);
             if (!Array.isArray(splits) || splits.length === 0) {
                 throw new Error('No valid splits could be created with the given constraints');
             }
             const avgVolume = splits.reduce((sum, split) => sum + split.totalVolume, 0) / splits.length;
             const avgValue = splits.reduce((sum, split) => sum + split.totalValue, 0) / splits.length;
-            this.displayResults(splits, {
+            this.lastStats = {
                 totalVolume,
                 totalValue,
                 itemCount: itemsWithInfo.length,
                 splitCount: splits.length,
                 avgVolume,
                 avgValue
-            });
+            };
+            this.displayResults(splits, this.lastStats);
         } catch (error) {
             console.error('Error calculating splits:', error);
             alert('Error calculating splits: ' + error.message);
@@ -137,15 +181,22 @@ class EVEItemSplitter {
         }
     }
 
-    createSplits(items, maxVolume, maxValue) {
+    createSplits(items, maxVolume, maxValue, strategy) {
         if (!items || items.length === 0) {
             return [];
         }
-        const sortedItems = [...items].sort((a, b) => 
-            (b.price / b.volume) - (a.price / a.volume)
-        );
+        let sortedItems;
+        if (strategy === 'max-value') {
+            sortedItems = [...items].sort((a, b) => (b.price / b.volume) - (a.price / a.volume));
+        } else if (strategy === 'min-cost') {
+            sortedItems = [...items].sort((a, b) => (a.volume / a.quantity) - (b.volume / b.quantity));
+        } else {
+            sortedItems = [...items];
+        }
+
         const splits = [];
         let currentSplit = { items: [], totalVolume: 0, totalValue: 0, totalItems: 0 };
+
         for (const item of sortedItems) {
             let remainingQuantity = item.quantity;
             while (remainingQuantity > 0) {
@@ -234,7 +285,7 @@ class EVEItemSplitter {
             const itemCount = split.items.length;
             const warning = itemCount >= 250 ? 'max' : itemCount >= 200 ? 'high' : '';
             return `
-                <div class="split-item">
+                <div class="split-item" data-volume="${split.totalVolume}" data-value="${split.totalValue}" data-cost="${split.deliveryCost}">
                     <div class="split-header">
                         <h3>Freighter ${index + 1}</h3>
                         <div class="split-stats">
@@ -255,7 +306,37 @@ class EVEItemSplitter {
                 </div>
             `;
         }).join('');
+        this.setupSortButtons(splits); // Передаем splits напрямую
         resultsDiv.classList.remove('hidden');
+    }
+
+    setupSortButtons(splits) {
+        const sortVolumeBtn = document.getElementById('sort-volume-btn');
+        const sortValueBtn = document.getElementById('sort-value-btn');
+        const sortCostBtn = document.getElementById('sort-cost-btn');
+
+        // Удаляем старые обработчики, чтобы избежать дублирования
+        const newSortVolumeBtn = sortVolumeBtn.cloneNode(true);
+        const newSortValueBtn = sortValueBtn.cloneNode(true);
+        const newSortCostBtn = sortCostBtn.cloneNode(true);
+        sortVolumeBtn.parentNode.replaceChild(newSortVolumeBtn, sortVolumeBtn);
+        sortValueBtn.parentNode.replaceChild(newSortValueBtn, sortValueBtn);
+        sortCostBtn.parentNode.replaceChild(newSortCostBtn, sortCostBtn);
+
+        newSortVolumeBtn.addEventListener('click', () => {
+            const sortedSplits = [...splits].sort((a, b) => b.totalVolume - a.totalVolume);
+            this.displayResults(sortedSplits, this.lastStats);
+        });
+
+        newSortValueBtn.addEventListener('click', () => {
+            const sortedSplits = [...splits].sort((a, b) => b.totalValue - a.totalValue);
+            this.displayResults(sortedSplits, this.lastStats);
+        });
+
+        newSortCostBtn.addEventListener('click', () => {
+            const sortedSplits = [...splits].sort((a, b) => b.deliveryCost - a.deliveryCost);
+            this.displayResults(sortedSplits, this.lastStats);
+        });
     }
 
     parseInput(input) {
@@ -277,16 +358,45 @@ class EVEItemSplitter {
             .filter(item => item !== null);
     }
 
-    async saveFits() {
-        // Поскольку сохранение фитингов требует авторизации, оставляем заглушку
-        alert("Saving fits requires EVE Online authentication, which has been disabled for this version.");
+    exportResults() {
+        const resultsDiv = document.getElementById('results');
+        if (resultsDiv.classList.contains('hidden')) {
+            alert('No results to export.');
+            return;
+        }
+        const exportData = {
+            stats: {
+                totalItems: document.querySelector('#total-stats .stat-item:nth-child(1) .value').textContent,
+                totalVolume: document.querySelector('#total-stats .stat-item:nth-child(2) .value').textContent,
+                totalValue: document.querySelector('#total-stats .stat-item:nth-child(3) .value').textContent,
+                numberOfFreighters: document.querySelector('#total-stats .stat-item:nth-child(4) .value').textContent,
+                avgVolume: document.querySelector('#total-stats .stat-item:nth-child(5) .value').textContent,
+                avgValue: document.querySelector('#total-stats .stat-item:nth-child(6) .value').textContent,
+                totalDeliveryCost: document.querySelector('#total-stats .stat-item:nth-child(7) .value').textContent
+            },
+            freighters: Array.from(document.querySelectorAll('.split-item')).map(split => ({
+                name: split.querySelector('h3').textContent,
+                items: Array.from(split.querySelectorAll('li')).map(item => ({
+                    name: item.querySelector('.item-name').textContent,
+                    quantity: item.querySelector('.item-quantity').textContent
+                })),
+                volume: split.querySelector('.split-stats div:nth-child(2)').textContent,
+                value: split.querySelector('.split-stats div:nth-child(3)').textContent,
+                deliveryCost: split.querySelector('.split-stats div:nth-child(4)').textContent
+            }))
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'freight_results.json';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     updateUIForNoAuth() {
-        // Показываем основной контент сразу, так как авторизация не требуется
         document.getElementById('main-content').classList.remove('hidden');
     }
 }
 
-// Initialize the application
 const app = new EVEItemSplitter();

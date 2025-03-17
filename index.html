@@ -21,8 +21,11 @@
                 <div class="form-group">
                     <label for="items-input">Items List (Name Amount):</label>
                     <textarea id="items-input"
-                        placeholder="Enduring Thermal Shield Hardener    26
-Regulated Mega Ion Phase Cannon I    26"></textarea>
+                        placeholder="Tritanium    100000
+Pyerite    50000
+Mexallon    20000"
+                        list="item-suggestions"></textarea>
+                    <datalist id="item-suggestions"></datalist>
                 </div>
 
                 <div class="constraints">
@@ -47,22 +50,19 @@ Regulated Mega Ion Phase Cannon I    26"></textarea>
                             <option value="28846">Nomad</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="strategy-select">Distribution Strategy:</label>
+                        <select id="strategy-select">
+                            <option value="min-cost">Minimize Delivery Cost</option>
+                            <option value="max-value">Maximize Value per Volume</option>
+                            <option value="balanced">Balanced</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button id="calculate-btn" class="btn">Calculate</button>
-                <!-- Оставляем кнопку для сохранения фитингов, но её функционал ограничен -->
-                <button id="save-fits-btn" class="btn">Save as Ship Fits</button>
-            </div>
-
-            <div id="progress-modal" style="display: none;">
-                <div id="progress-modal-content">
-                    <h3>Saving Fits...</h3>
-                    <div id="progress-bar-container" style="width: 100%; background-color: #e7e7e7;">
-                        <div id="progress-bar" style="width: 0%; height: 20px; background-color: rgb(22, 123, 255);">
-                        </div>
-                    </div>
-                    <p id="progress-text">Progress: 0%</p>
-                </div>
+                <button id="clear-btn" class="btn">Clear</button>
+                <button id="export-btn" class="btn">Export Results</button>
             </div>
 
             <div id="loading" class="hidden">
@@ -77,6 +77,11 @@ Regulated Mega Ion Phase Cannon I    26"></textarea>
                 </div>
                 <div id="splits-container">
                     <h2>Freighters</h2>
+                    <div class="sort-buttons">
+                        <button id="sort-volume-btn" class="btn">Sort by Volume</button>
+                        <button id="sort-value-btn" class="btn">Sort by Value</button>
+                        <button id="sort-cost-btn" class="btn">Sort by Delivery Cost</button>
+                    </div>
                     <div id="splits-list"></div>
                 </div>
             </div>
@@ -84,17 +89,8 @@ Regulated Mega Ion Phase Cannon I    26"></textarea>
     </div>
     <script src="config.js"></script>
     <script src="app.js"></script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SXLN0JPZBL"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-SXLN0JPZBL');
-    </script>
-
     <footer style="text-align: center; padding: 10px; background-color: #222121ad; position: fixed; bottom: 0; width: 100%;">
-        <p>Created by Sasha Winston, modified by huntervandijk © 2025 </p>
+        <p>Created by Sasha Winston, modified by huntervandijk for FEARLESS PEOPLE © 2025</p>
     </footer>
 </body>
 
