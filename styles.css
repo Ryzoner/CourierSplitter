@@ -226,16 +226,6 @@ textarea {
     color: var(--success);
 }
 
-#user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-#character-name {
-    color: var(--accent);
-}
-
 #loading {
     text-align: center;
     padding: 40px;

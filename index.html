@@ -13,22 +13,16 @@
     <div class="container">
         <header>
             <img src="favicon.ico" alt="Logo" style="height: 32px; margin-right: 10px;">
-            <h1>EVE HaulSplitter (DEMO)</h1>
-            <div id="auth-section">
-                <button id="login-btn" class="btn">Login with EVE Online</button>
-                <div id="user-info" class="hidden">
-                    <span id="character-name"></span>
-                    <button id="logout-btn" class="btn">Logout</button>
-                </div>
-            </div>
+            <h1>EVE HaulSplitter</h1>
         </header>
 
-        <main id="main-content" class="hidden">
+        <main id="main-content">
             <div class="input-section">
                 <div class="form-group">
                     <label for="items-input">Items List (Name Amount):</label>
                     <textarea id="items-input"
-                        placeholder="Enduring Thermal Shield Hardener    26&#10;Regulated Mega Ion Phase Cannon I    26"></textarea>
+                        placeholder="Enduring Thermal Shield Hardener    26
+Regulated Mega Ion Phase Cannon I    26"></textarea>
                 </div>
 
                 <div class="constraints">
@@ -56,14 +50,10 @@
                 </div>
 
                 <button id="calculate-btn" class="btn">Calculate</button>
+                <!-- Оставляем кнопку для сохранения фитингов, но её функционал ограничен -->
                 <button id="save-fits-btn" class="btn">Save as Ship Fits</button>
             </div>
 
-
-
-
-
-            <!-- Modal -->
             <div id="progress-modal" style="display: none;">
                 <div id="progress-modal-content">
                     <h3>Saving Fits...</h3>
@@ -74,7 +64,6 @@
                     <p id="progress-text">Progress: 0%</p>
                 </div>
             </div>
-
 
             <div id="loading" class="hidden">
                 <div class="spinner"></div>
@@ -87,17 +76,11 @@
                     <div id="total-stats"></div>
                 </div>
                 <div id="splits-container">
-                    <h2>Splits</h2>
+                    <h2>Freighters</h2>
                     <div id="splits-list"></div>
                 </div>
-
             </div>
-
-
-
-
         </main>
-
     </div>
     <script src="config.js"></script>
     <script src="app.js"></script>
@@ -107,17 +90,12 @@
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
-
         gtag('config', 'G-SXLN0JPZBL');
     </script>
 
-    <footer
-        style="text-align: center; padding: 10px; background-color: #222121ad; position: fixed; bottom: 0; width: 100%;">
-        <p>Created by Sasha Winston &copy; 2025</p>
+    <footer style="text-align: center; padding: 10px; background-color: #222121ad; position: fixed; bottom: 0; width: 100%;">
+        <p>Created by Sasha Winston © 2025</p>
     </footer>
-
 </body>
-
-
 
 </html>
