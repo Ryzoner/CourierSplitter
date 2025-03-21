@@ -292,7 +292,10 @@ class EVEItemSplitter {
                             <div class="item-count ${warning}">Items: ${itemCount}/250</div>
                             <div>${formatNumber(parseFloat(split.totalVolume.toFixed(2)))} m³</div>
                             <div data-total-value="${split.totalValue}">${formatPrice(split.totalValue)}</div>
-                            <div>Delivery Cost: ${formatPrice(split.deliveryCost)}</div>
+                            <div class="delivery-cost-container">
+                                Delivery Cost: ${formatPrice(split.deliveryCost)}
+                                <button class="copy-btn" data-cost="${split.deliveryCost}">Copy</button>
+                            </div>
                         </div>
                     </div>
                     <ul>
@@ -306,7 +309,8 @@ class EVEItemSplitter {
                 </div>
             `;
         }).join('');
-        this.setupSortButtons(splits); // Передаем splits напрямую
+        this.setupSortButtons(splits);
+        this.setupCopyButtons(); // Добавляем обработчики для кнопок копирования
         resultsDiv.classList.remove('hidden');
     }
 
@@ -315,7 +319,6 @@ class EVEItemSplitter {
         const sortValueBtn = document.getElementById('sort-value-btn');
         const sortCostBtn = document.getElementById('sort-cost-btn');
 
-        // Удаляем старые обработчики, чтобы избежать дублирования
         const newSortVolumeBtn = sortVolumeBtn.cloneNode(true);
         const newSortValueBtn = sortValueBtn.cloneNode(true);
         const newSortCostBtn = sortCostBtn.cloneNode(true);
@@ -336,6 +339,26 @@ class EVEItemSplitter {
         newSortCostBtn.addEventListener('click', () => {
             const sortedSplits = [...splits].sort((a, b) => b.deliveryCost - a.deliveryCost);
             this.displayResults(sortedSplits, this.lastStats);
+        });
+    }
+
+    setupCopyButtons() {
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const cost = button.getAttribute('data-cost');
+                navigator.clipboard.writeText(cost)
+                    .then(() => {
+                        button.textContent = 'Copied!';
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy cost to clipboard.');
+                    });
+            });
         });
     }
 
@@ -382,7 +405,7 @@ class EVEItemSplitter {
                 })),
                 volume: split.querySelector('.split-stats div:nth-child(2)').textContent,
                 value: split.querySelector('.split-stats div:nth-child(3)').textContent,
-                deliveryCost: split.querySelector('.split-stats div:nth-child(4)').textContent
+                deliveryCost: split.querySelector('.split-stats .delivery-cost-container').textContent.split('Copy')[0].trim()
             }))
         };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });

@@ -53,6 +53,27 @@ header {
     opacity: 0.9;
 }
 
+.copy-btn {
+    background-color: var(--success);
+    color: var(--text-primary);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background-color: #00b359;
+}
+
+.delivery-cost-container {
+    display: flex;
+    align-items: center;
+}
+
 .hidden {
     display: none !important;
 }
